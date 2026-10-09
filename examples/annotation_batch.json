@@ -1,0 +1,15 @@
+{
+  "documents": [
+    {
+      "sample_id": "demo_document",
+      "full_id": "demo_document",
+      "short_id": "demo_doc",
+      "pages": 2,
+      "pdf": "../data/source/document.pdf",
+      "mineru_root": "../data/parsers/mineru",
+      "paddle_root": "../data/parsers/paddle",
+      "ovis_root": "../data/parsers/ovis",
+      "source_docx": null
+    }
+  ]
+}

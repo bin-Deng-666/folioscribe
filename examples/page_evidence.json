@@ -1,0 +1,54 @@
+{
+  "schema_version": "ocr-agent-page-evidence.v4",
+  "sample_id": "example_document",
+  "page": 1,
+  "page_image": {
+    "path": "/absolute/path/to/page_0001.png",
+    "sha256": "replace-with-real-sha256",
+    "width": 1000,
+    "height": 1400
+  },
+  "pdf_page": {"width_pt": 500.0, "height_pt": 700.0},
+  "pdf_path": "/absolute/path/to/document.pdf",
+  "evidence": {
+    "pdf": [{
+      "evidence_id": "pdf.line.p1.0001",
+      "kind": "pdf_line",
+      "bbox_image_px": [100, 100, 600, 150],
+      "text": "Document title",
+      "required_coverage": true
+    }],
+    "mineru": [],
+    "paddle": [],
+    "ovis": [],
+    "anydoc": [],
+    "tools": []
+  },
+  "current_candidate": {
+    "blocks": [{
+      "block_id": "candidate.block.p1.0001",
+      "type": "title",
+      "level": 1,
+      "bbox_image_px": [100, 100, 600, 150],
+      "bbox_pdf_pt": [50, 50, 300, 75],
+      "bbox_normalized": [0.1, 0.07142857, 0.6, 0.10714286],
+      "text": "Document title",
+      "source_refs": ["pdf.line.p1.0001"],
+      "support_refs": [],
+      "reading_order": 0
+    }]
+  },
+  "field_reviews": {
+    "schema_version": "ocr-agent-field-review.v2",
+    "blocks": {
+      "candidate.block.p1.0001": {
+        "type": {"status": "PASS", "method": "pdf_text_context", "evidence_refs": ["pdf.line.p1.0001"]},
+        "level": {"status": "PASS", "method": "document_heading_sequence", "evidence_refs": ["pdf.line.p1.0001"]},
+        "bbox": {"status": "PASS", "method": "pdf_span_union", "evidence_refs": ["pdf.line.p1.0001"]},
+        "text": {"status": "PASS", "method": "pdf_text_exact", "evidence_refs": ["pdf.line.p1.0001"]}
+      }
+    }
+  },
+  "detected_conflicts": [],
+  "document_context": {"confirmed_titles": [], "candidate_titles": []}
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FolioScribe 标注人工修正说明</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  /* the viewer stylesheet locks the body for the SPA; this page must scroll normally */
+  html, body { height: auto; overflow: auto; }
+  body { background: var(--bg); color: var(--ink); font-size: 13.5px; line-height: 1.6; }
+  .guide table.grid td, .guide table.grid th { color: var(--ink); line-height: 1.65; }
+  html { scroll-behavior: smooth; }
+  .guide h2, .guide h3 { scroll-margin-top: 18px; }
+
+  /* 图文演示：截图 + 步骤要点 */
+  .walk-index { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+  .walk-index a { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--secondary-strong); text-decoration: none; font-size: 12px; }
+  .walk-index a:hover { border-color: var(--accent); color: var(--accent); }
+  .walk-index b { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 10.5px; }
+  .step:target { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(23,105,170,.14); }
+  .step { scroll-margin-top: 16px; }
+  .walk { display: grid; gap: 14px; }
+  .step {
+    display: grid; grid-template-columns: minmax(220px, 420px) minmax(240px, 1fr); gap: 14px; align-items: start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px;
+  }
+  .step.wide { grid-template-columns: 1fr; }
+  .step.wide .step-shot { max-width: 560px; }
+  .step-shot { position: relative; border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; background: var(--surface-subtle); cursor: zoom-in; }
+  .step-shot img { display: block; width: 100%; height: auto; }
+  .step-shot::after { content: "点击放大"; position: absolute; right: 6px; bottom: 6px; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; background: rgba(32,36,40,.66); color: #fff; }
+  .step-body { min-width: 0; }
+  .step-title { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; font-weight: 650; color: var(--ink); }
+  .step-title .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; flex: none; }
+  .step ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.78; color: var(--secondary-strong); }
+  .step li + li { margin-top: 2px; }
+  .step code, .step kbd { font-size: 11.5px; }
+  @media (max-width: 780px) { .step { grid-template-columns: 1fr; } }
+  /* 灯箱 */
+  .lightbox { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(18,20,23,.86); padding: 22px; }
+  .lightbox[hidden] { display: none; }
+  .lightbox img { max-width: 96vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 18px 48px rgba(0,0,0,.5); background: #fff; }
+  .lightbox figcaption { margin-top: 9px; color: #eef1f4; font-size: 12.5px; text-align: center; }
+  .lightbox .close { position: absolute; top: 14px; right: 16px; border: 0; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; background: rgba(255,255,255,.92); color: #1f2937; }
+  .lightbox .close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  a:focus-visible, kbd:focus-visible, .toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  @media print {
+    .toc, nav.toc { display: none !important; }
+    body { background: #fff; }
+    .guide { max-width: none; padding: 0; }
+    .card, .type-card, ol.steps.quick li { break-inside: avoid; box-shadow: none; }
+    .note { background: #fff; }
+    .step-shot::after { display: none; }
+    .walk-index { display: none; }
+    .step { grid-template-columns: 1fr; }
+  }
+  .guide table.grid tbody tr:nth-child(even) { background: #fafbfc; }
+  .guide table.grid code { font-size: 11.5px; }
+  .guide-body { min-width: 0; }
+  .toc {
+    position: fixed; top: 24px; left: max(16px, calc(50vw - 540px - 150px)); display: grid; gap: 6px;
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+    font-size: 12px; box-shadow: var(--shadow);
+  }
+  .toc a { color: var(--secondary); text-decoration: none; padding: 2px 4px; border-radius: 5px; }
+  .toc a:hover { background: var(--surface-subtle); color: var(--ink); }
+  @media (max-width: 1260px) { .toc { position: static; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; box-shadow: none; } }
+  .type-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 10px; }
+  .type-card { background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; }
+  .type-head { margin-bottom: 7px; display: flex; align-items: center; gap: 7px; }
+  .type-name { font-size: 12.5px; font-weight: 650; color: var(--ink); }
+  .type-fields { display: grid; gap: 4px; margin-bottom: 7px; }
+  .tf { display: grid; grid-template-columns: auto 1fr; gap: 7px; align-items: baseline; font-size: 11.5px; line-height: 1.6; }
+  .tf code { justify-self: start; padding: 1px 7px; border-radius: 999px; background: #eaf2fb; border: 1px solid #c6dcf3; color: #14508c; font-size: 11px; font-weight: 650; white-space: nowrap; }
+  .tf span { color: var(--secondary); }
+  .type-req { font-size: 11.5px; color: var(--secondary-strong); margin-bottom: 4px; }
+  .type-why { font-size: 12px; color: var(--secondary-strong); line-height: 1.65; padding-top: 6px; border-top: 1px dashed var(--line); }
+  .guide {
+    --secondary: #4b5563;          /* 4.6:1 on the page background: readable for 12-13px text */
+    --secondary-strong: #374151;
+    max-width: 1080px; margin: 0 auto; padding: 30px 22px 72px;
+  }
+  .guide h1 { font-size: 24px; margin: 0 0 6px; }
+  .guide h2 { font-size: 17px; margin: 34px 0 12px; padding-bottom: 7px; border-bottom: 2px solid var(--line); letter-spacing: .01em; }
+  .guide h3 { font-size: 13.5px; margin: 16px 0 6px; color: var(--secondary-strong); }
+  .lead { color: var(--secondary); font-size: 13.5px; line-height: 1.8; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h3 { margin-top: 0; color: var(--ink); font-size: 12.5px; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.grid th, table.grid td { border: 1px solid var(--line-soft); padding: 6px 8px; text-align: left; vertical-align: top; }
+  table.grid th { background: var(--surface-subtle); font-weight: 600; }
+  .type-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 11px; }
+  .req { color: #b91c1c; font-weight: 600; }
+  .opt { color: var(--muted); }
+  kbd { font-family: var(--mono, monospace); font-size: 10.5px; padding: 1px 5px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); background: var(--surface-subtle); color: var(--secondary); }
+  .chip.manual { background: #e8f6ec; border-color: #86c99a; color: #1b6b34; }
+  .chip.pipeline { background: #eef2f7; border-color: #b6c2d1; color: #475569; border-style: dashed; }
+  ol.steps { padding-left: 20px; font-size: 13px; line-height: 1.9; color: var(--secondary-strong); }
+  ol.steps.quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 22px; padding-left: 22px; }
+  ol.steps.quick li { background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
+  table.grid.compact td, table.grid.compact th { padding: 5px 8px; font-size: 11.5px; }
+  table.grid td code, .type-why code { background: var(--surface-subtle); padding: 0 4px; border-radius: 4px; }
+  .note { border-left: 4px solid #3b82f6; background: #f5f9ff; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 12.5px; color: var(--secondary); line-height: 1.75; }
+  .warn { border-left-color: #f2cd9c; background: #fffaf0; }
+</style>
+</head>
+<body>
+<div class="guide">
+  <nav class="toc" aria-label="目录">
+    <a href="#quick">5 步上手</a>
+    <a href="#types">类型与字段</a>
+    <a href="#cross">跨页</a>
+    <a href="#errors">常见问题</a>
+    <a href="#walkthrough">图文演示</a>
+    <a href="#ops">操作速查</a>
+    <a href="#quality">质量</a>
+    <a href="#open">打开</a>
+  </nav>
+  <main class="guide-body">
+  <h1>FolioScribe 标注人工修正说明</h1>
+  <p>以下界面使用仓库自带的合成文档。启动演示后可以安全体验编辑、保存和跨页操作。</p>
+  <img src="/static/demo.png" alt="FolioScribe 合成文档标注工作台" style="width:100%;height:auto;border-radius:8px" loading="lazy">
+  <p class="lead">
+    我们标注的是<b>版面元素（block）</b>：在页面上它是一组坐标（bbox），在数据里它是一条带类型、内容和证据引用的记录。
+    标注工具在右侧卡片里改字段，改动以补丁形式存在 <code>annotations/&lt;sample&gt;/page_XXXX.json</code>，<b>不会改动 runs/ 里的模型结果</b>。
+  </p>
+
+
+  <h2 id="quick">〇、5 步上手</h2>
+  <ol class="steps quick">
+    <li><b>看</b>：切到「标注」模式 → 点页面上一个框，右侧卡片出现。</li>
+    <li><b>判类型</b>：卡片里点类型按钮（或按 <kbd>1</kbd>–<kbd>9</kbd>）；类型不对先改类型。</li>
+    <li><b>填内容</b>：文本类核对/抄写「框内参考文本」→「复制参考文本到该框」；表格直接改单元格。</li>
+    <li><b>补关系</b>：标题给层级；图表题选所属；跨页选「承接上页 / 不接」；顺序不对用连线核对。</li>
+    <li><b>看进度</b>：卡片底部字段完整度到 <b>n/n</b> 再翻页（<kbd>Q</kbd>/<kbd>E</kbd>）；自动保存，不用手动存。</li>
+  </ol>
+  <p class="note">不知道从哪下手时：<b>先修类型，再修内容，最后修关系</b>。画布上的框和右侧列表是同一批 block，改任意一边都会同步。</p>
+
+  <h2 id="types">一、要标哪些类型</h2>
+  <div class="type-grid2">
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#1d4ed8">text</span><span class="type-name">正文文本</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：贴合文字块边缘（画布坐标自动换算 PDF 坐标，不用手填）</span></div><div class="tf"><code>text</code><span>框内文字：与页面逐字一致；可先「复制参考文本到该框」再核对</span></div><div class="tf"><code>cross_page_text</code><span>跨页：被页边切断时选「承接上页」，确认不接就选「不接」</span></div></div><div class="type-why">最常见类型；不要把两行合并成一个框，也不要一框套多段</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#dc2626">title</span><span class="type-name">标题</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：贴合标题行（含编号）</span></div><div class="tf"><code>text</code><span>标题文字：与页面一致</span></div><div class="tf"><code>level</code><span>层级 L1–L6：按视觉大小/编号推断；导出时合同上限为 L4</span></div></div><div class="type-why">层级给错会让整份文档的大纲错位，宁可 CHECK 也别乱给</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#15803d">table</span><span class="type-name">表格</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：包住整张表（含表头；续表只框本页那部分）</span></div><div class="tf"><code>html</code><span>表格结构：含 &lt;table&gt; 且至少一个单元格有内容；用网格直接改单元格</span></div><div class="tf"><code>cross_page_table</code><span>跨页：续表选「承接上页」；k/n 与截断判据由规则给出（只读）</span></div></div><div class="type-why">表格以 HTML 为准；跨页续表要写承接关系，不要拆成两张独立表</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#0f766e">table_caption</span><span class="type-name">表题</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：表题文字行</span></div><div class="tf"><code>text</code><span>表题文字：与页面一致</span></div><div class="tf"><code>parent_id</code><span>所属：必须指向它标注的那张表（table）</span></div></div><div class="type-why">表题必须挂在表上，否则导出时无法归属</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#c026d3">image_caption</span><span class="type-name">图题</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：图题文字行</span></div><div class="tf"><code>text</code><span>图题文字：与页面一致</span></div><div class="tf"><code>parent_id</code><span>所属：指向对应的图（image）或图表（chart）</span></div></div><div class="type-why">图题与图题、图题与正文重复时，保留语义正确的那一个</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#7c3aed">image</span><span class="type-name">图片</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：包住整张图（含边框阴影）</span></div></div><div class="type-why">没有文本字段；表内图片显示为裁剪缩略图</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#c2410c">chart</span><span class="type-name">图表</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：包住整个图表（坐标轴、图例、数据标签）</span></div></div><div class="type-why">数据图/曲线图用 chart；照片、示意图用 image</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#9f1239">seal</span><span class="type-name">印章</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：包住印章本身（红色的章）</span></div></div><div class="type-why">章压住文字时，文字与章各自成框</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#0e7490">formula</span><span class="type-name">公式</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：贴合公式区域</span></div><div class="tf"><code>text</code><span>公式文本：可用 LaTeX 记法，按页面视觉抄录</span></div></div><div class="type-why">行内公式与行间公式分开框</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#7c5c43">header</span><span class="type-name">页眉</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：页面顶部页眉行</span></div><div class="tf"><code>text</code><span>页眉文字：与页面一致，不要与本页正文混淆</span></div></div><div class="type-why">页眉/页脚/页码是家具类，逐页重复出现</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#475569">footer</span><span class="type-name">页脚</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：页面底部页脚行</span></div><div class="tf"><code>text</code><span>页脚文字：与页面一致</span></div></div><div class="type-why">含版权行、期刊信息等；不要与脚注混为一类</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#4d7c0f">page_number</span><span class="type-name">页码</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：只框页码本身</span></div><div class="tf"><code>text</code><span>页码文本：按页面显示（如 12 / 第 12 页）</span></div></div><div class="type-why">页码单独成框，不要与页眉页脚合并</div></div>
+      <div class="type-card"><div class="type-head"><span class="type-pill" style="background:#a16207">footnote</span><span class="type-name">脚注</span></div><div class="type-fields"><div class="tf"><code>bbox</code><span>框位置：页面底部的脚注块</span></div><div class="tf"><code>text</code><span>脚注文字：与页面一致（含注号）</span></div></div><div class="type-why">脚注与页脚的区别：脚注有注号、跟随正文引用</div></div>
+  </div>
+  <p class="note">判定顺序：先看它<b>是什么</b>（类型），再看它<b>写了什么</b>（text/HTML），最后确认它<b>和别的东西的关系</b>（parent_id、跨页、阅读顺序）。类型选错比内容错更严重。</p>
+
+  <h2 id="cross">二、跨页怎么标（text 与 table 用同一套判断）</h2>
+  <p class="lead">
+    跨页不是 true/false：<b>文本的“续接”本身就是那条链接</b>，表格的几何判据由规则给出、只读展示。人只需要做三选一里的两个动作：
+  </p>
+  <div class="cols">
+    <div class="card">
+      <h3>衔接 · 承接上页</h3>
+      <p class="lead" style="margin:4px 0">进入拾取模式并<b>自动翻到上一页</b>，点一下被承接的块/表；回来写入 <code>continues_block_id</code>，状态 <span class="chip manual">人工判定</span>。
+      下一页对应的块会自动写反向链接。</p>
+    </div>
+    <div class="card">
+      <h3>衔接 · 不接</h3>
+      <p class="lead" style="margin:4px 0">明确判定“本页独立”。写入 <code>continues_block_id: null</code> + <code>status: PASS</code>（<b>null 也是一个结论</b>），并清掉上一页的反向链接。</p>
+    </div>
+    <div class="card">
+      <h3>不动它 = 未定</h3>
+      <p class="lead" style="margin:4px 0">保持模型/规则给出的值（标 <span class="chip pipeline">模型判定</span>），导出时可被过滤。</p>
+    </div>
+    <div class="card">
+      <h3>画布上怎么看</h3>
+      <p class="lead" style="margin:4px 0">
+        <span class="chip" style="border-color:#4f46e5;color:#4f46e5">跨页段落</span> 紫色虚线外框 +
+        <span class="chip" style="border-color:#d97706;color:#d97706">续表 k/n</span> 琥珀色虚线外框与角标，
+        <b>浏览模式和标注模式都会显示</b>。
+      </p>
+    </div>
+  </div>
+
+
+  <h3 id="errors">常见问题 → 怎么改</h3>
+  <table class="grid">
+    &lt;caption class="sr-only"&gt;校验提示与修正方法&lt;/caption&gt;
+    <thead><tr><th scope="col" style="width:250px">校验提示</th><th scope="col">什么意思</th><th scope="col" style="width:250px">在 viewer 里怎么改</th></tr></thead>
+    <tbody>
+      <tr><td><code>overlapping_text_blocks</code></td><td>两个 text 框几乎完全重叠（模型把同一行拆成了两块）</td><td>Ctrl/Shift 同时选中 → 卡片「合并为一个框」，或删掉多余那个</td></tr>
+      <tr><td><code>duplicate_overlapping_textual_blocks</code></td><td>两个不同类型的框写着同一段字（例如 title 与 text 重复）</td><td>保留正确类型，删掉另一个（<kbd>Delete</kbd>，可恢复）</td></tr>
+      <tr><td><code>duplicate_image_claim</code></td><td>同一张图被两个块同时引用</td><td>删掉多余的块（通常是误判出来的 image（或表内图））</td></tr>
+      <tr><td><code>table 内容为空</code></td><td>表格 HTML 只有骨架、没有文字</td><td>直接编辑单元格；或折叠「原始 HTML」重建</td></tr>
+      <tr><td><code>invalid_caption_parent</code></td><td>图题/表题没有指向所属块，或指错了</td><td>卡片「所属」下拉里选正确的 table / image / chart</td></tr>
+      <tr><td><code>标题需要 L1–L4</code>（导出合同）</td><td>标题没给层级，或超过合同上限</td><td>点 L1–L6 选层级；超过 L4 导出时会压平，标注层保留原值</td></tr>
+      <tr><td>跨页没标</td><td>句子/表格被页边切断</td><td>卡片「跨页」里点「承接上页」并到上一页点目标块；确认不接就点「不接」</td></tr>
+      <tr><td>本页太难</td><td>版面混乱、无法可靠标注</td><td>工具栏「标注难度过大」→ 目录出现 ⚠，留给复核；不要硬编</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="walkthrough">三、操作演示（图文）</h2>
+  <p class="lead">下面 9 张图按真实操作顺序排列：先看清两种模式的差别，再走一遍「新建 → 填类型与字段 → 修改 → 删除 → 撤销/重置 → 跨页与顺序」。每张图点一下可放大看清控件。</p>
+  <nav class="walk-index" aria-label="演示步骤速览">
+    <a href="#walk-1"><b>1</b> 浏览模式：只看不改</a>
+    <a href="#walk-2"><b>2</b> 标注模式：点框编辑</a>
+    <a href="#walk-3"><b>3</b> 新建框：按 B 拉框</a>
+    <a href="#walk-4"><b>4</b> 先定类型再填字段</a>
+    <a href="#walk-5"><b>5</b> 修改已有框</a>
+    <a href="#walk-6"><b>6</b> 删除误框</a>
+    <a href="#walk-7"><b>7</b> 撤销与恢复</a>
+    <a href="#walk-8"><b>8</b> 重置该页 / 难度过大</a>
+    <a href="#walk-9"><b>9</b> 跨页承接 + 阅读顺序</a>
+  </nav>
+  <div class="walk">
+
+    <figure class="step" id="walk-1">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">1</span>浏览模式：只看，不改</h3>
+        <ul>
+          <li>红圈处是<b>「浏览 / 标注」切换</b>：浏览只看不改，标注才可编辑。</li>
+          <li>左侧栏显示<b>机器判定</b>（PASS / CHECK 徽章、未决字段数），用于自查。</li>
+          <li>画布上是类型标签、阅读顺序连线；<b>不出现任何编辑控件</b>。</li>
+          <li>这一层是流水线产物，只读——要改就切到标注模式。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-2">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">2</span>标注模式：点框就地编辑</h3>
+        <ul>
+          <li>点红圈处切到<b>「标注」</b>后，左侧栏换成<b>标注进度</b>（● 已标注 / 未标注、文档 ✓/✗）。</li>
+          <li>点页面上任意框 → 卡片出现在框旁（<b>永远不遮住选中的框</b>，可拖动、<kbd>⇱</kbd> 复位）。</li>
+          <li>卡片底部有<b>字段完整度</b>；填到 n/n 再翻页，自动保存（2.5s）。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-3">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">3</span>新建框：按 <kbd>B</kbd> 再拉框</h3>
+        <ul>
+          <li>按 <kbd>B</kbd>（或 ⚙ → 新建框）后在页面上<b>拖一个矩形</b>，松开即建好。</li>
+          <li>新框按几何位置插入阅读顺序，不会粗暴追加到末尾。</li>
+          <li>框还没填类型时，卡片会提示补必填字段。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-4">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">4</span>先定类型，再填该类型的字段</h3>
+        <ul>
+          <li>顶部类型胶囊 + 13 个类型按钮：<b>改类型会清空旧的类型专属字段</b>（不继承）。</li>
+          <li>按类型显示必填项：<code>title</code> 要 L1–L6；<code>table</code> 要有表格内容；图题/表题要选所属块。</li>
+          <li>文本类可先「复制参考文本到该框」再核对，比手打快也不容易错。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-5">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">5</span>修改已有框：同一套逻辑</h3>
+        <ul>
+          <li>点框即改；打字<b>输入即生效</b>（500ms 去抖写入操作日志）。</li>
+          <li>表格是<b>真网格</b>：直接改单元格，<kbd>Tab</kbd> 跳格；表中图显示裁剪缩略图。</li>
+          <li>多个框要合并：Ctrl/Shift 多选 → 卡片「合并为一个框」。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-6">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">6</span>删除误框</h3>
+        <ul>
+          <li>卡片页脚「删除该框」，或选中后按 <kbd>Delete</kbd>。</li>
+          <li>删除是记录在案的修正，<b>可撤销</b>（<kbd>Ctrl</kbd>+<kbd>Z</kbd>）。</li>
+          <li>多个框一起删：多选后一次删除，撤销是一步。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-7">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">7</span>看修正记录、撤销与恢复</h3>
+        <ul>
+          <li>右侧栏列出本页<b>修正操作</b>（谁、何时、改了什么字段）。</li>
+          <li><kbd>↶</kbd> 撤销 / <kbd>↷</kbd> 恢复逐步回放，改错了不用重来。</li>
+          <li>保存后服务端会回一次<b>整页校验</b>，有错会在右侧直接列出。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step" id="walk-8">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">8</span>重置该页 / 标记「难度过大」</h3>
+        <ul>
+          <li>「重新标注该页」：清空本页人工修正回到流水线初值（<kbd>R</kbd>，有确认弹框）。</li>
+          <li>「标注难度过大」：本页打 ⚠ 标记（<b>独立存盘</b>），目录里能一眼看到，留给复核。</li>
+          <li>不要硬编：版面确实无法判断时，打标 + 说明比勉强标更省复核时间。</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <figure class="step wide" id="walk-9">
+      
+      <figcaption class="step-body">
+        <h3 class="step-title"><span class="n">9</span>跨页承接 + 阅读顺序</h3>
+        <ul>
+          <li>被页边切断的段落/表格：卡片「跨页」里选<b>「承接上页」</b>（到上一页点目标块）或<b>「不接」</b>（显式结论）。</li>
+          <li>跨页框在画布上有<b>虚线外框 + 角标</b>（紫=跨页段落、橙=续表 k/n），一眼能认。</li>
+          <li>阅读顺序用<b>连线+箭头</b>核对；顺序不对就调「顺序」行，或开关右上角连线辅助检查。</li>
+        </ul>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="放大查看截图">
+    <button class="close" type="button" id="lightboxClose">关闭（Esc）</button>
+    <figure style="margin:0">
+      <img id="lightboxImage" src="" alt="">
+      <figcaption id="lightboxCaption"></figcaption>
+    </figure>
+  </div>
+
+  <h2 id="ops">四、Viewer 提供的操作（标注模式）</h2>
+  <table class="grid">
+    &lt;caption class="sr-only"&gt;标注模式下的操作与快捷键&lt;/caption&gt;
+    <thead><tr><th scope="col" style="width:170px">操作</th><th scope="col" style="width:250px">怎么做</th><th scope="col">说明</th></tr></thead>
+    <tbody>
+      <tr><td>新建框</td><td><kbd>B</kbd> → 拖拽 → <kbd>Enter</kbd> 确认 / <kbd>Esc</kbd> 取消</td><td>灰屏进入框选；草稿框可拖动、拖角缩放；确认后<b>自动填框内 PDF 文字</b>、表格给网格草稿、并继承覆盖到的块内容。</td></tr>
+      <tr><td>选中 / 修改</td><td>单击块 → 框旁边出现编辑卡</td><td>拖动移动、拖角缩放、<kbd>←↑↓→</kbd> 1px（<kbd>Shift</kbd> ×10）、<kbd>Alt</kbd> 临时关吸附。编辑期间其它框不可点（防误改），点空白 / <kbd>Esc</kbd> 结束。</td></tr>
+      <tr><td>多选</td><td><kbd>Ctrl</kbd>/<kbd>Shift</kbd> 点选块，或 <kbd>Shift</kbd> 拖拽框选</td><td>多选后卡片可：<b>合并为一个框</b>（外框取并集、证据与文本合并，表格按行拼接并去掉重复表头）、<b>统一改类型</b>（一次撤销）。</td></tr>
+      <tr><td>阅读顺序</td><td><kbd>O</kbd> 插到某块之后 · <kbd>[</kbd> <kbd>]</kbd> 前后移 · 列表拖拽</td><td>画布上的<b>连线</b>显示阅读顺序（工具栏可开关）；连线跟着块移动。</td></tr>
+      <tr><td>删除 / 恢复</td><td><kbd>Delete</kbd></td><td>删除不在画布留痕；「标注」页签里可单条恢复，<kbd>Ctrl+Z</kbd> 可整体撤销。</td></tr>
+      <tr><td>撤销 / 重做</td><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Shift+Z</kbd></td><td>所有编辑都可撤销；键入内容按“一段编辑”合并成一步。</td></tr>
+      <tr><td>保存</td><td>自动（停止编辑 2.5s）/ <kbd>Ctrl+S</kbd></td><td>工具栏显示「已保存 · 时间」或「未保存 · n 处」；翻页、切换模式前会强制保存。</td></tr>
+      <tr><td>重新标注该页</td><td>工具栏按钮 或 <kbd>R</kbd> → 弹框确认</td><td>丢弃本页补丁，回到模型结果从头标注（其它页不受影响）。</td></tr>
+      <tr><td>标注难度过大</td><td>工具栏按钮</td><td>本页太难、无法可靠标注时标记；左侧目录出现 ⚠，方便后续复核或跳过。</td></tr>
+      <tr><td>翻页 / 换文档</td><td><kbd>Q</kbd> <kbd>E</kbd> 或 <kbd>←</kbd> <kbd>→</kbd> · <kbd>A</kbd> <kbd>D</kbd></td><td>标注模式下从文档最后一页继续后翻，会弹出<b>文档级结论</b>（✓ 标注成功 / ✗ 标注失败）。</td></tr>
+      <tr><td>浏览模式</td><td>切到「浏览」</td><td>只读复核：机器判定 PASS/CHECK、原文/结果图切换、按类型着色、类型标签（含标题层级）、阅读顺序连线、PDF 文本面板。</td></tr>
+    </tbody>
+  </table>
+
+
+  <h2 id="quality">五、质量标准（提交前自己过一遍）</h2>
+  <ol class="steps">
+    <li><b>类型</b>对不对：正文 / 标题 / 表格 / 图 / 图题 / 页眉页脚 / 页码 / 脚注。</li>
+    <li><b>标题层级</b>合理：L1 是文档标题，往下逐级；跳级需要有理由。</li>
+    <li><b>表格</b>至少有一个非空单元格；行数、列数与版面对得上。</li>
+    <li><b>caption</b> 指向正确：图题指图、表题指表。</li>
+    <li>本页<b>字段完整度</b>（卡片底部进度条）到 <b>n/n</b>；不完整的块会以 chip 列出原因。</li>
+    <li>跨页块要么「承接上页」，要么「不接」；不确定就保持模型判定。</li>
+    <li>画布上<b>没有重叠框</b>（重叠的框会被校验判为不一致），阅读顺序连线不交叉打结。</li>
+  </ol>
+  <p class="note warn">标注结果会按 ocr-agent 自己的校验器复核：块级 schema（类型/必填字段/坐标）与 revision 级一致性（证据归属、重叠、阅读顺序）。
+  校验结果在「标注」页签里显示；有 error 时请修正后再翻页。</p>
+
+  <h2 id="open">六、打开方式</h2>
+  <p class="lead">
+    Viewer：<code>http://&lt;host&gt;:8745/?batch=&lt;批次&gt;&amp;sample=&lt;样本&gt;&amp;page=1</code> ·
+    本说明页：<code>http://&lt;host&gt;:8745/static/guide.html</code> ·
+    补丁位置：<code>&lt;batch&gt;/annotations/&lt;sample&gt;/page_XXXX.json</code>（含操作日志、基线指纹、字段评审）
+  </p>
+  </main>
+</div>
+
+<script>
+(function () {
+  const box = document.getElementById('lightbox');
+  const image = document.getElementById('lightboxImage');
+  const caption = document.getElementById('lightboxCaption');
+  const close = document.getElementById('lightboxClose');
+  let lastFocus = null;
+  function open(shot, text) {
+    lastFocus = document.activeElement;
+    image.src = shot.querySelector('img').src;
+    image.alt = shot.querySelector('img').alt;
+    caption.textContent = text;
+    box.hidden = false;
+    close.focus();
+  }
+  function hide() {
+    box.hidden = true;
+    image.src = '';
+    if (lastFocus) lastFocus.focus();
+  }
+  document.querySelectorAll('.step').forEach(function (step) {
+    const shot = step.querySelector('.step-shot');
+    if (!shot) return;
+    const title = step.querySelector('.step-title') ? step.querySelector('.step-title').textContent.replace(/^\s*\d+\s*/, '') : '';
+    shot.setAttribute('role', 'button');
+    shot.setAttribute('tabindex', '0');
+    shot.addEventListener('click', function () { open(shot, title); });
+    shot.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(shot, title); }
+    });
+  });
+  close.addEventListener('click', hide);
+  box.addEventListener('click', function (event) { if (event.target === box) hide(); });
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !box.hidden) hide(); });
+})();
+</script>
+</body>
+</html>

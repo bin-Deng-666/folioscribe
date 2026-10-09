@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "folioscribe"
+version = "0.1.0"
+description = "Evidence-grounded document annotation and stateful multipage SFT tools"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["Pillow>=10.1", "jsonschema>=4.18"]
+
+[project.urls]
+Homepage = "https://github.com/bin-Deng-666/folioscribe"
+Repository = "https://github.com/bin-Deng-666/folioscribe"
+Issues = "https://github.com/bin-Deng-666/folioscribe/issues"
+
+[project.optional-dependencies]
+annotation = ["PyMuPDF>=1.24", "lxml>=5"]
+inference = ["openai>=1.30"]
+browser = ["playwright>=1.50"]
+dev = ["pytest>=8", "ruff>=0.11", "build>=1.2"]
+
+[project.scripts]
+folioscribe-project = "sft.projection:main"
+folioscribe-viewer = "ocr_agent_viewer.server:main"
+
+[tool.setuptools]
+include-package-data = false
+packages = ["ocr_agent", "ocr_agent_viewer", "sft"]
+
+[tool.setuptools.package-dir]
+ocr_agent = "components/annotation/src/ocr_agent"
+ocr_agent_viewer = "components/annotation/viewer"
+sft = "components/training/sft"
+
+[tool.setuptools.package-data]
+ocr_agent_viewer = ["static/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["components/annotation/src", "components/annotation/tests", "components/training"]
+testpaths = ["components/annotation/tests", "tests"]
+addopts = "-ra"
+markers = ["integration: requires external schemas or data not included in this repository"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+extend-exclude = ["**/archive/**"]
+
+[tool.ruff.lint]
+# Adopt correctness checks first; broad formatting changes are separate from behavior fixes.
+select = ["E9", "F63", "F7", "F82"]
