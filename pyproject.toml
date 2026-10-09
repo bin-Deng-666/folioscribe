@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Evidence-grounded document annotation and stateful multipage SFT tools"
 readme = "README.md"
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 requires-python = ">=3.11"
 dependencies = ["Pillow>=10.1", "jsonschema>=4.18"]
 

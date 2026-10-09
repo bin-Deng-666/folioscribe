@@ -1,6 +1,6 @@
 include README.md README.zh-CN.md CONTRIBUTING.md ROADMAP.md THIRD_PARTY_NOTICES.md LICENSE .env.example .editorconfig uv.lock
 recursive-include components *.py *.md *.json *.html *.js *.css *.png
-recursive-include examples *.py
+recursive-include examples *.py *.json
 recursive-include tests *.py
 recursive-include benchmarks *.py
 recursive-include scripts *.py *.sh

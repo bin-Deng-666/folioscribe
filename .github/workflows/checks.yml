@@ -23,16 +23,23 @@ jobs:
       - run: ruff check .
       - run: node --check components/annotation/viewer/static/app.js
       - run: python -m build
-      - name: Verify wheel contains the viewer
+      - name: Verify distributed viewer, examples and notices
         run: |
           python - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
+          import tarfile
           with ZipFile(next(Path('dist').glob('*.whl'))) as wheel:
               names = set(wheel.namelist())
               for name in ('ocr_agent_viewer/server.py', 'ocr_agent_viewer/static/index.html',
                            'ocr_agent_viewer/static/app.js', 'sft/output_format.py'):
                   assert name in names, name
+              assert any(name.endswith('/licenses/THIRD_PARTY_NOTICES.md') for name in names)
+              assert not any('/static/shots/' in name for name in names)
+          with tarfile.open(next(Path('dist').glob('*.tar.gz'))) as source:
+              names = source.getnames()
+              for suffix in ('examples/annotation_batch.json', 'examples/page_evidence.json'):
+                  assert any(name.endswith('/' + suffix) for name in names), suffix
           PY
   browser:
     runs-on: ubuntu-latest
